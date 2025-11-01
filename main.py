@@ -31,12 +31,27 @@ def start(message, res=False): # Приветственное сообщение
 @bot.message_handler(commands=["help"])
 def help(message, res=False): # Помощь
     bot.send_message(message.chat.id, "Вам нужна помощь")
+    print(message.chat.id)
+    print(data_base)
 
 
 @bot.message_handler(commands=["reg"])
 def registration(message,res=False): # Регистрация
-    bot.send_message(message.chat.id, "Как я могу к Вам обращаться?")
-    bot.register_next_step_handler(message, get_name)
+    global data_base
+    if message.chat.id not in data_base:
+        bot.send_message(message.chat.id, "Как я могу к Вам обращаться?")
+        bot.register_next_step_handler(message, get_name)
+    else:
+        print("h")
+        keyboard_new_register = types.InlineKeyboardMarkup()
+        key_yes = types.InlineKeyboardButton(text="Да", callback_data="reg_yes")
+        keyboard_new_register.add(key_yes)
+        key_no = types.InlineKeyboardButton(text="Нет", callback_data="reg_no")
+        keyboard_new_register.add(key_no)
+        bot.send_message(message.chat.id, "Мы с Вами уже знакомы, хотите поменять имя в системе?", reply_markup=keyboard_new_register)
+
+
+    
 
 
 @bot.message_handler(content_types=["text"])
@@ -51,16 +66,9 @@ def main_menu(message, res=False): # Главное меню
 
 def get_name(message):
     global data_base
-    if message not in data_base:
-        data_base[message.chat.id] = Person(message)
-    else:
-        keyboard_new_register = types.InlineKeyboardMarkup()
-        key_yes = types.InlineKeyboardButton(text="Да", callback_data="reg_yes")
-        keyboard_new_register.add(key_yes)
-        key_no = types.InlineKeyboardButton(text="Нет", callback_data="reg_no")
-        keyboard_new_register.add(key_no)
-        bot.send_message(message.chat.id, "Мы с Вами уже знакомы, хотите поменять имя в системе?", reply_markup=keyboard_new_register)
-
+    data_base[message.chat.id] = Person(message)
+    print(data_base)
+    
 
 def rename(message): 
     data_base[message.chat.id] = Person(message)
