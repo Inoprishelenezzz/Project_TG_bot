@@ -4,7 +4,7 @@ from telebot import types
 
 
 # Токен
-token = '8335220900:AAE3aAK-1WD6P4mE4_EvL3t22NlTgrulV5U'
+token = "токен"
 # Создание бота
 bot = telebot.TeleBot(token)
 # Задача основных переменных
