@@ -4,7 +4,7 @@ from telebot import types
 
 
 # Токен
-token = "токен"
+token = open("c:\\Users\\memor\\Documents\\уник\\Проект\\Token.txt").readline()
 # Создание бота
 bot = telebot.TeleBot(token)
 # Задача основных переменных
@@ -31,8 +31,6 @@ def start(message, res=False): # Приветственное сообщение
 @bot.message_handler(commands=["help"])
 def help(message, res=False): # Помощь
     bot.send_message(message.chat.id, "Вам нужна помощь")
-    print(message.chat.id)
-    print(data_base)
 
 
 @bot.message_handler(commands=["reg"])
@@ -42,7 +40,6 @@ def registration(message,res=False): # Регистрация
         bot.send_message(message.chat.id, "Как я могу к Вам обращаться?")
         bot.register_next_step_handler(message, get_name)
     else:
-        print("h")
         keyboard_new_register = types.InlineKeyboardMarkup()
         key_yes = types.InlineKeyboardButton(text="Да", callback_data="reg_yes")
         keyboard_new_register.add(key_yes)
@@ -51,27 +48,26 @@ def registration(message,res=False): # Регистрация
         bot.send_message(message.chat.id, "Мы с Вами уже знакомы, хотите поменять имя в системе?", reply_markup=keyboard_new_register)
 
 
-    
-
-
 @bot.message_handler(content_types=["text"])
 def handle_text(message, res=False): # Обработка текста
     bot.send_message(message.chat.id, 'Вы написали: ' + message.text)   
 
 
-@bot.message_handler(commands=["/menu"])
+@bot.message_handler(commands=["menu"])
 def main_menu(message, res=False): # Главное меню
     bot.send_message(message.chat.id, "Это главное меню")
 
 
 def get_name(message):
-    global data_base
+    global data_base, main_menu
     data_base[message.chat.id] = Person(message)
-    print(data_base)
+    main_menu(message)
     
 
 def rename(message): 
+    global main_menu
     data_base[message.chat.id] = Person(message)
+    main_menu(message)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -86,7 +82,6 @@ def callback_worker(call):
     elif call.data == "reg_yes":
         bot.send_message(call.message.chat.id, "Как я могу к Вам обращаться?")
         bot.register_next_step_handler(call.message, rename)
-        
         
 
 bot.polling(none_stop=True, interval=0)
