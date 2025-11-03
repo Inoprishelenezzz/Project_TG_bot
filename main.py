@@ -1,19 +1,13 @@
 # Импорт библиотек
 import telebot
 from telebot import types
-
+import sqlite3
 
 # Токен
-token = open("c:\\Users\\memor\\Documents\\уник\\Проект\\Token.txt").readline()
+token = open("C:\\Users\\memor\\Documents\\уник\\Проект\\Token.txt").readline()
 # Создание бота
 bot = telebot.TeleBot(token)
-# Задача основных переменных
-data_base = {}
 
-# Класс человека
-class Person:
-    def __init__(self, name):
-        self.name = name
 
 # Функциональный блок
 @bot.message_handler(commands=["start"])
@@ -35,8 +29,11 @@ def help(message, res=False): # Помощь
 
 @bot.message_handler(commands=["reg"])
 def registration(message,res=False): # Регистрация
-    global data_base
-    if message.chat.id not in data_base:
+    data_base = sqlite3.connect("C:\\Users\\memor\\Documents\\GitHub\\Project_TG_bot\\data_base.db")
+    cursor = data_base.cursor()
+    cursor.execute("SELECT * FROM Users WHERE Telegram_id=?", [message.chat.id])
+    print(list(cursor.fetchone()))
+    if cursor.fetchone() == []: 
         bot.send_message(message.chat.id, "Как я могу к Вам обращаться?")
         bot.register_next_step_handler(message, get_name)
     else:
@@ -46,6 +43,8 @@ def registration(message,res=False): # Регистрация
         key_no = types.InlineKeyboardButton(text="Нет", callback_data="reg_no")
         keyboard_new_register.add(key_no)
         bot.send_message(message.chat.id, "Мы с Вами уже знакомы, хотите поменять имя в системе?", reply_markup=keyboard_new_register)
+    data_base.commit()
+    data_base.close()
 
 
 @bot.message_handler(content_types=["text"])
@@ -59,20 +58,29 @@ def main_menu(message, res=False): # Главное меню
 
 
 def get_name(message):
-    global data_base, main_menu
-    data_base[message.chat.id] = Person(message)
+    global main_menu
+    data_base = sqlite3.connect("C:\\Users\\memor\\Documents\\GitHub\\Project_TG_bot\\data_base.db")
+    cursor = data_base.cursor()
+    cursor.execute("INSERT INTO Users (Telegram_id, Name) VALUES (?, ?)", [message.chat.id, message.text])
+    print(list(cursor.execute("SELECT * FROM Users")))
     main_menu(message)
+    data_base.commit()
+    data_base.close()
     
 
 def rename(message): 
     global main_menu
-    data_base[message.chat.id] = Person(message)
+    data_base = sqlite3.connect("C:\\Users\\memor\\Documents\\GitHub\\Project_TG_bot\\data_base.db")
+    cursor = data_base.cursor()
+    cursor.execute(f"UPDATE Users SET Name='{message.text}' WHERE Telegram_id='{message.chat.id}'")
     main_menu(message)
+    data_base.commit()
+    data_base.close()
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
-    global data_base, registration, main_menu, help
+    global registration, main_menu, help
     if call.data == "reg": 
         registration(call.message)
     elif call.data == "help":
